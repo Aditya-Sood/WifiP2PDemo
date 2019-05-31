@@ -34,10 +34,9 @@ public class MainActivity extends AppCompatActivity {
         channel = manager.initialize(this, getMainLooper(), null);
         broadcastReceiver = new WifiDirectBroadcastReceiver(manager, channel, this);
 
-        checkLocationServicesEnabled();
-
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
             != PackageManager.PERMISSION_GRANTED) {
+            checkLocationServicesEnabled();
             requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 0);
         }
 
@@ -98,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
         if(!gps_enabled && !network_enabled) {
             // notify user
             new AlertDialog.Builder(this)
-                    .setMessage("GPS Network Not Enabled")
+                    .setMessage("Enable location to allow detection of peers")
                     .setPositiveButton("Open Location Settings", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface paramDialogInterface, int paramInt) {
