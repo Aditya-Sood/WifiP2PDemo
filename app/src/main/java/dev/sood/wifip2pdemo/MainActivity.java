@@ -12,6 +12,7 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Build;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -94,16 +95,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkLocationServicesEnabled() {
-        LocationManager lm = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
+        LocationManager locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
         boolean gps_enabled = false;
         boolean network_enabled = false;
 
         try {
-            gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+            gps_enabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         } catch(Exception ex) {}
 
         try {
-            network_enabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+            network_enabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
         } catch(Exception ex) {}
 
         if(!gps_enabled && !network_enabled) {
@@ -113,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
                     .setPositiveButton("Open Location Settings", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                            startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                            startActivityForResult(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS), 1);
                         }
                     })
                     .setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -123,6 +124,32 @@ public class MainActivity extends AppCompatActivity {
                         }
                     })
                     .show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode) {
+            case 1: {
+                LocationManager locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
+
+                if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                    return;
+                } else {
+                    new AlertDialog.Builder(this)
+                            .setMessage("Cannot discover peers without location services")
+                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    //((MainActivity) getApplicationContext()).finish();
+                                }
+                            })
+                            .show();
+                }
+
+            }
         }
     }
 
