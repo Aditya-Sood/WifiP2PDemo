@@ -6,11 +6,9 @@ import android.content.Intent;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 public class WifiDirectBroadcastReceiver extends BroadcastReceiver {
 
@@ -35,8 +33,12 @@ public class WifiDirectBroadcastReceiver extends BroadcastReceiver {
 
             if(state == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
                 Toast.makeText(context, "WiFi P2P enabled on device", Toast.LENGTH_SHORT).show();
+                Button wifiButton = wifiActivity.findViewById(R.id.wifi_button);
+                wifiButton.setEnabled(true);
             } else {
                 Toast.makeText(context, "WiFi P2P disabled on device", Toast.LENGTH_SHORT).show();
+                Button wifiButton = wifiActivity.findViewById(R.id.wifi_button);
+                wifiButton.setEnabled(false);
                 return;
             }
         } else if(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {

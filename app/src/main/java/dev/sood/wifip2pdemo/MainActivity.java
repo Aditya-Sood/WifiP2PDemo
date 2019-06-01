@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
+import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Build;
 import android.provider.Settings;
@@ -20,7 +21,7 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
-    private WifiP2pManager manager;
+    private WifiP2pManager p2pManager;
     private WifiP2pManager.Channel channel;
     private WifiDirectBroadcastReceiver broadcastReceiver;
     private IntentFilter intentFilter;
@@ -30,13 +31,18 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        manager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
-        channel = manager.initialize(this, getMainLooper(), null);
-        broadcastReceiver = new WifiDirectBroadcastReceiver(manager, channel, this);
+        p2pManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
+        channel = p2pManager.initialize(this, getMainLooper(), null);
+        broadcastReceiver = new WifiDirectBroadcastReceiver(p2pManager, channel, this);
+
+        //TODO: Enable WiFi
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if(wifiManager.isWifiEnabled() != true) {
+            wifiManager.setWifiEnabled(true);
+        }
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
             != PackageManager.PERMISSION_GRANTED) {
-            checkLocationServicesEnabled();
             requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 0);
         }
 
@@ -50,7 +56,11 @@ public class MainActivity extends AppCompatActivity {
         wifiButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                manager.discoverPeers(channel, new WifiP2pManager.ActionListener(){
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    checkLocationServicesEnabled();
+                }
+
+                p2pManager.discoverPeers(channel, new WifiP2pManager.ActionListener(){
 
                     @Override
                     public void onSuccess() {
@@ -64,7 +74,9 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
+        wifiButton.setEnabled(false);
     }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
