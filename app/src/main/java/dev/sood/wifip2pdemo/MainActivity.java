@@ -61,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
                     checkLocationServicesEnabled();
                 }
 
+                broadcastReceiver.clearPeerList();
+
                 p2pManager.discoverPeers(channel, new WifiP2pManager.ActionListener(){
 
                     @Override
