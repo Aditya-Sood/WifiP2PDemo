@@ -47,6 +47,7 @@ public class WifiDirectBroadcastReceiver extends BroadcastReceiver {
                 return;
             }
         } else if(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
+            //Also called when self goes out
             Toast.makeText(context, "Peers changed", Toast.LENGTH_SHORT).show();
 
             if(wifiP2pManager != null) {
@@ -63,15 +64,13 @@ public class WifiDirectBroadcastReceiver extends BroadcastReceiver {
 
                         textView.setText(devicesString);
 
+                        wifiActivity.setDevicesSpinner(peerDevices);
                         //wifiActivity.setUserInteracting(false);
-                        if(!peerDevices.isEmpty()) {
-                            adapter  = new WifiP2pDeviceArrayAdapter(context, R.layout.spinner_item_device, peerDevices);
-
-                            Spinner spinner = wifiActivity.findViewById(R.id.spinner_devices_list);
-                            spinner.setAdapter(adapter);
-                        } else {
+                        if(peerDevices.isEmpty()) {
                             textView.setText("NO PEERS");
+
                         }
+                        //wifiActivity.setUserInteracting(true);
 
                     }
                 });

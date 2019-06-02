@@ -23,7 +23,11 @@ import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+import java.util.ArrayList;
+
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
+
+    //TODO: Refactor (multiple arraylists??)
 
     private WifiP2pManager p2pManager;
     private WifiP2pManager.Channel channel;
@@ -31,18 +35,27 @@ public class MainActivity extends AppCompatActivity {
     private IntentFilter intentFilter;
 
     private Spinner peerSpinner;
-    //private boolean userInteracting = false;
+    private ArrayList<WifiP2pDevice> peerDevices = new ArrayList<WifiP2pDevice>();
+    private WifiP2pDeviceArrayAdapter adapter;
+    private boolean userInteracting = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        WifiP2pDevice foobar = new WifiP2pDevice();
+        foobar.deviceName = "Searching for peers...";
+        peerDevices.add(foobar);
+        this.adapter  = new WifiP2pDeviceArrayAdapter(getApplicationContext(), R.layout.spinner_item_device, peerDevices);
+        this.peerSpinner = findViewById(R.id.spinner_devices_list);
+        peerSpinner.setAdapter(adapter);
+        peerSpinner.setOnItemSelectedListener(this);
+
         p2pManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
         channel = p2pManager.initialize(this, getMainLooper(), null);
         broadcastReceiver = new WifiDirectBroadcastReceiver(p2pManager, channel, this);
 
-        //TODO: Enable WiFi
         WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         if(wifiManager.isWifiEnabled() != true) {
             wifiManager.setWifiEnabled(true);
@@ -67,38 +80,69 @@ public class MainActivity extends AppCompatActivity {
                     checkLocationServicesEnabled();
                 }
 
-                broadcastReceiver.clearPeerList();
+                //TODO: Replace with adapter.notifyDataSetChanged()
+                //broadcastReceiver.clearPeerList();
 
                 p2pManager.discoverPeers(channel, new WifiP2pManager.ActionListener(){
 
                     @Override
                     public void onSuccess() {
-                        Toast.makeText(getApplicationContext(), "Peer discovery successful", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "Peer discovery call finished", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onFailure(int reason) {
-                        Toast.makeText(getApplicationContext(), "Peer discovery unsuccessful - "+reason, Toast.LENGTH_SHORT).show();
+                        String error = "";
+                        switch (reason) {
+                            case WifiP2pManager.ERROR:           error = "Internal error"; break;
+                            case WifiP2pManager.BUSY:            error = "Framework busy, unable to service request"; break;
+                            case WifiP2pManager.P2P_UNSUPPORTED: error = "P2P unsupported on this device"; break;
+
+                            default: error = "Unknown error"; break;
+                        }
+                        Toast.makeText(getApplicationContext(), "Operation failed: " + error, Toast.LENGTH_SHORT).show();
                     }
                 });
             }
         });
         wifiButton.setEnabled(false);
+    }
 
-        peerSpinner = findViewById(R.id.spinner_devices_list);
-        peerSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+    public void setDevicesSpinner(ArrayList<WifiP2pDevice> deviceList) {
+        this.peerDevices = deviceList;
+
+        //TODO: Add flag for enabling connect button (if peers exist)
+        //this.adapter  = new WifiP2pDeviceArrayAdapter(getApplicationContext(), R.layout.spinner_item_device, peerDevices);
+        adapter.clear();
+        if(deviceList != null) {
+            for(WifiP2pDevice device : peerDevices) {
+                adapter.add(device);
+            }
+            peerSpinner.setSelection(0, false);
+        }
+
+        adapter.notifyDataSetChanged();
+
+        //this.peerSpinner = findViewById(R.id.spinner_devices_list);
+
+        //peerSpinner.setAdapter(adapter);
+
+        /*peerSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 // Only called the first time the item is selected
-                String deviceName = ((WifiP2pDevice) parent.getItemAtPosition(position)).deviceName;
-                Toast.makeText(getApplicationContext(), deviceName, Toast.LENGTH_SHORT).show();
+                *//*String deviceName = ((WifiP2pDevice) parent.getItemAtPosition(position)).deviceName;
+                Toast.makeText(getApplicationContext(), deviceName, Toast.LENGTH_SHORT).show();*//*
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                Toast.makeText(getApplicationContext(), "Nothing selected", Toast.LENGTH_SHORT).show();
+                *//*String deviceName = ((WifiP2pDevice) parent.getItemAtPosition(position)).deviceName;
+                Toast.makeText(getApplicationContext(), deviceName, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Nothing selected", Toast.LENGTH_SHORT).show();*//*
             }
-        });
+        });*/
     }
 
 
@@ -175,12 +219,11 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-/*
     public void setUserInteracting(boolean value) {
         userInteracting = value;
     }
 
-    @Override
+    /*@Override
     public void onUserInteraction() {
         super.onUserInteraction();
         userInteracting = true;
@@ -196,5 +239,16 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         unregisterReceiver(broadcastReceiver);
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        String deviceName = ((WifiP2pDevice) parent.getItemAtPosition(position)).deviceName;
+        Toast.makeText(getApplicationContext(), deviceName, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+        Toast.makeText(getApplicationContext(), "Nothing selected", Toast.LENGTH_SHORT).show();
     }
 }
