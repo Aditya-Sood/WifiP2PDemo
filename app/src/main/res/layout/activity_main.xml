@@ -28,12 +28,18 @@
 
     <Spinner
         android:id="@+id/spinner_devices_list"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:overlapAnchor="false"
         android:layout_height="wrap_content"
         android:background="@android:drawable/btn_dropdown"
-        android:spinnerMode="dropdown"
-        android:layout_margin="10dp"
-        android:contentDescription="Available devices"
+        android:spinnerMode="dialog"
+        android:paddingLeft="1dp"
+        android:paddingRight="1dp"
+        android:paddingStart="1dp"
+        android:paddingEnd="1dp"
+        android:prompt="@string/available_devices"
         app:layout_constraintTop_toBottomOf="@id/device_list_text_view"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"/>
