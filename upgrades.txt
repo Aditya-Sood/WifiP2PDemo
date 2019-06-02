@@ -1,0 +1,7 @@
+- Change own device name
+- Improve Spinner drop down view
+- Figure how broadcast receiver works
+
+* Working:
+So the broadcast receiver detects new devices on its own once registered, no need to repeat the procedure.
+Also, identifies peers that have left on its own as well (in about a minute)
