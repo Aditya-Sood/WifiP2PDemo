@@ -3,5 +3,6 @@
 - Figure how broadcast receiver works
 
 * Working:
-So the broadcast receiver detects new devices on its own once registered, no need to repeat the procedure.
-Also, identifies peers that have left on its own as well (in about a minute)
+- So the broadcast receiver detects new devices on its own once registered, no need to repeat the procedure.
+- Also, identifies peers that have left on its own as well (in about a minute)
+- However, the devices only look for peers for a short duration of time - When both are mutually searching for devices (assuming to be roughly about a minute). So ensure that both are searching for that duration.
