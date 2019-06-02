@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.net.wifi.WifiManager;
+import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Build;
 import android.provider.Settings;
@@ -17,7 +18,9 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
@@ -26,6 +29,9 @@ public class MainActivity extends AppCompatActivity {
     private WifiP2pManager.Channel channel;
     private WifiDirectBroadcastReceiver broadcastReceiver;
     private IntentFilter intentFilter;
+
+    private Spinner peerSpinner;
+    //private boolean userInteracting = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +84,21 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         wifiButton.setEnabled(false);
+
+        peerSpinner = findViewById(R.id.spinner_devices_list);
+        peerSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                // Only called the first time the item is selected
+                String deviceName = ((WifiP2pDevice) parent.getItemAtPosition(position)).deviceName;
+                Toast.makeText(getApplicationContext(), deviceName, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                Toast.makeText(getApplicationContext(), "Nothing selected", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
 
@@ -103,11 +124,11 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             gps_enabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        } catch(Exception ex) {}
+        } catch(Exception ex) {ex.printStackTrace();}
 
         try {
             network_enabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-        } catch(Exception ex) {}
+        } catch(Exception ex) {ex.printStackTrace();}
 
         if(!gps_enabled && !network_enabled) {
             // notify user
@@ -154,6 +175,16 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+/*
+    public void setUserInteracting(boolean value) {
+        userInteracting = value;
+    }
+
+    @Override
+    public void onUserInteraction() {
+        super.onUserInteraction();
+        userInteracting = true;
+    }*/
 
     @Override
     protected void onResume() {

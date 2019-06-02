@@ -63,6 +63,7 @@ public class WifiDirectBroadcastReceiver extends BroadcastReceiver {
 
                         textView.setText(devicesString);
 
+                        //wifiActivity.setUserInteracting(false);
                         if(!peerDevices.isEmpty()) {
                             adapter  = new WifiP2pDeviceArrayAdapter(context, R.layout.spinner_item_device, peerDevices);
 
