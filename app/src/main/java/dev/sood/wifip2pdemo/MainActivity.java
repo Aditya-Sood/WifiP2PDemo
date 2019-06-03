@@ -118,7 +118,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             for(WifiP2pDevice device : peerDevices) {
                 adapter.add(device);
             }
-            peerSpinner.setSelection(0, false);
+            // Don't change user selection
+            //peerSpinner.setSelection(0, false);
         }
 
         adapter.notifyDataSetChanged();
