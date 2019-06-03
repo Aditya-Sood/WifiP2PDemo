@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.net.wifi.WifiManager;
+import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Build;
@@ -38,6 +39,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private ArrayList<WifiP2pDevice> peerDevices = new ArrayList<WifiP2pDevice>();
     private WifiP2pDeviceArrayAdapter adapter;
     private boolean userInteracting = false;
+    private Button wifiButton;
+    private Button connectButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,10 +64,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             wifiManager.setWifiEnabled(true);
         }
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 0);
-        }
+        checkForPermissions();
 
         intentFilter = new IntentFilter();
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -72,11 +72,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
-        Button wifiButton = findViewById(R.id.wifi_button);
+        wifiButton = findViewById(R.id.wifi_button);
         wifiButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    //checkForPermissions();
                     checkLocationServicesEnabled();
                 }
 
@@ -92,24 +93,60 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
                     @Override
                     public void onFailure(int reason) {
-                        String error = "";
-                        switch (reason) {
-                            case WifiP2pManager.ERROR:           error = "Internal error"; break;
-                            case WifiP2pManager.BUSY:            error = "Framework busy, unable to service request"; break;
-                            case WifiP2pManager.P2P_UNSUPPORTED: error = "P2P unsupported on this device"; break;
-
-                            default: error = "Unknown error"; break;
-                        }
+                        String error = getErrorMessage(reason);
                         Toast.makeText(getApplicationContext(), "Operation failed: " + error, Toast.LENGTH_SHORT).show();
                     }
                 });
             }
         });
         wifiButton.setEnabled(false);
+
+        connectButton = findViewById(R.id.btn_connect);
+        connectButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                //checkForPermissions();
+
+                final WifiP2pDevice device = (WifiP2pDevice) peerSpinner.getSelectedItem();
+                WifiP2pConfig config = new WifiP2pConfig();
+                config.deviceAddress = device.deviceAddress;
+
+                p2pManager.connect(channel, config, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        Toast.makeText(MainActivity.this, "Successfully connected to "+ device.deviceName, Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFailure(int reason) {
+                        String error = getErrorMessage(reason);
+                        Toast.makeText(MainActivity.this, "Connection failed: "+error, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+        connectButton.setEnabled(false);
     }
 
-    public void setDevicesSpinner(ArrayList<WifiP2pDevice> deviceList) {
+    private String getErrorMessage(int reason) {
+        String error = "";
+        switch (reason) {
+            case WifiP2pManager.ERROR:           error = "Internal error"; break;
+            case WifiP2pManager.BUSY:            error = "Framework busy, unable to service request"; break;
+            case WifiP2pManager.P2P_UNSUPPORTED: error = "P2P unsupported on this device"; break;
+
+            default: error = "Unknown error"; break;
+        }
+
+        return error;
+    }
+
+    public void updateDevicesSpinner(ArrayList<WifiP2pDevice> deviceList) {
         this.peerDevices = deviceList;
+
+        connectButton.setEnabled(false);
 
         //TODO: Add flag for enabling connect button (if peers exist)
         //this.adapter  = new WifiP2pDeviceArrayAdapter(getApplicationContext(), R.layout.spinner_item_device, peerDevices);
@@ -123,6 +160,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         adapter.notifyDataSetChanged();
+
+        connectButton.setEnabled(true);
 
         //this.peerSpinner = findViewById(R.id.spinner_devices_list);
 
@@ -151,13 +190,17 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
             case 0: {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED
+                        && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(getApplicationContext(), "Granted", Toast.LENGTH_SHORT).show();
+                    if(Build.VERSION.SDK_INT >= 15)
+                        wifiButton.callOnClick();
                     break;
                 }
             }
             default:
-                Toast.makeText(getApplicationContext(), "Loc req not granted", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Loc reqs not granted", Toast.LENGTH_SHORT).show();
+                //TODO: End activity as can't do anything else
         }
 
     }
@@ -251,5 +294,42 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
         Toast.makeText(getApplicationContext(), "Nothing selected", Toast.LENGTH_SHORT).show();
+    }
+
+    private void checkForPermissions() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+            if(checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                    || checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+                /*if(shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)
+                        || shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setMessage("Location permissions are required to detect and connect with neighbouring WiFi devices.\n\nKiwix DOES NOT use the permission to track your location, only for connecting to the file-receiving device.")
+                            .setNeutralButton("Dismiss", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // Do nothing
+                                    requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+                                }
+                            })
+                            .show();
+                } else {
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+                }*/
+
+                new AlertDialog.Builder(MainActivity.this)
+                        .setMessage("Location permissions are required to detect and connect with neighbouring WiFi devices.\n\nThe app DOES NOT use the permission to track your location, only for connecting to the file-receiving device.")
+                        .setNeutralButton("Dismiss", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Do nothing
+                                requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+                            }
+                        })
+                        .show();
+            }
+        }
     }
 }

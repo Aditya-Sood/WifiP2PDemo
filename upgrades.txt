@@ -3,6 +3,7 @@
 - Figure how broadcast receiver works
 - Visual peer selection process
 - Check if can add something about the Kiwix app running when discovering new devices
+- Close device as soon as user refuses a necessary request
 
 * Working:
 - So the broadcast receiver detects new devices on its own once registered, no need to repeat the procedure.

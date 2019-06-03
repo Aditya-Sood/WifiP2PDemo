@@ -64,7 +64,7 @@ public class WifiDirectBroadcastReceiver extends BroadcastReceiver {
 
                         textView.setText(devicesString);
 
-                        wifiActivity.setDevicesSpinner(peerDevices);
+                        wifiActivity.updateDevicesSpinner(peerDevices);
                         //wifiActivity.setUserInteracting(false);
                         if(peerDevices.isEmpty()) {
                             textView.setText("NO PEERS");
@@ -87,13 +87,14 @@ public class WifiDirectBroadcastReceiver extends BroadcastReceiver {
 
     }
 
-    public void clearPeerList() {
+    /*public void clearPeerList() {
         if(peerDevices != null)
             peerDevices.clear();
 
         if(adapter != null)
             adapter.clear();
-    }
+    }*/
+
 /*
     public WifiP2pDeviceArrayAdapter getAdapter() {
         return adapter;
